@@ -1,6 +1,6 @@
 import { Component } from "react";
 import CartProducts from "../CartProducts";
-import './index.css';  // Import the CSS file for styling
+import './index.css';
 
 const initialData = [
     { id: 1, count: 0, product: true },
@@ -10,47 +10,58 @@ const initialData = [
 ];
 
 class Cart extends Component {
-    state = { data: initialData, productCount: 4 };  // Initially 4 items are eligible
-
-    componentDidMount() {
-        this.getData();
-    }
+    state = { data: initialData, productCount: 0 };
 
     increment = (id) => {
-        this.setState(prevState => ({
-            data: prevState.data.map(item =>
-                item.id === id ? { ...item, count: item.count + 1 } : item
-            )
-        }));
-    };
-
-    decrement = (id) => {
-        this.setState(prevState => ({
-            data: prevState.data.map(item =>
-                item.id === id && item.count > 0 ? { ...item, count: item.count - 1 } : item
-            )
-        }));
-    };
-
-    deleteItem = (id) => {
-        this.setState(prevState => {
-            // Delete the item
-            const updatedData = prevState.data.filter(each => each.id !== id);
-
-            // Recalculate the productCount based on remaining items with product: true
-            const productCount = updatedData.filter(item => item.product).length;
-
-            return {
-                data: updatedData,
-                productCount: productCount  // Update productCount
-            };
+        this.setState((prevState) => {
+            let updatedProductCount = prevState.productCount;
+            const updatedData = prevState.data.map((item) => {
+                if (item.id === id) {
+                    if (item.product === true) {
+                        updatedProductCount += 1;
+                        return { ...item, count: item.count + 1, product: false };
+                    }
+                    return { ...item, count: item.count + 1 };
+                }
+                return item;
+            });
+            return { data: updatedData, productCount: updatedProductCount };
         });
     };
 
-    getData = () => {
-        // Calculate productCount based on product:true in the data
-        const productCount = this.state.data.filter(item => item.product).length;
-        this.setState({ productCount });
+    decrement = (id) => {
+        this.setState((prevState) => {
+            let updatedProductCount = prevState.productCount;
+            const updatedData = prevState.data.map((item) => {
+                if (item.id === id && item.count > 0) {
+                    const newCount = item.count - 1;
+                    if (newCount === 0 && item.product === false) {
+                        updatedProductCount -= 1;
+                        return { ...item, count: newCount, product: true };
+                    }
+                    return { ...item, count: newCount };
+                }
+                return item;
+            });
+            return { data: updatedData, productCount: updatedProductCount };
+        });
+    };
+
+    deleteItem = (id) => {
+        this.setState((prevState) => {
+            const updatedData = prevState.data.filter((each) => each.id !== id);
+            const deletedItem = prevState.data.find((item) => item.id === id);
+            let updatedProductCount = prevState.productCount;
+            if (prevState.productCount === 0) {
+                console.log("We don't want count to be negative");
+            } else if (deletedItem && deletedItem.product) {
+                updatedProductCount -= 1;
+            }
+            return {
+                data: updatedData,
+                productCount: updatedProductCount
+            };
+        });
     };
 
     render() {
